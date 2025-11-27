@@ -10,13 +10,12 @@ describe('generateSchedule', () => {
                 name: 'Pasta',
                 servingRequirement: 'hot',
                 hotPriority: 'high',
-                prepTime: 10,
                 steps: [
                     {
                         id: 's1',
                         recipeId: 'r1',
                         name: 'Boil Water',
-                        appliance: 'burner',
+                        appliance: 'stove',
                         duration: 15,
                         dependsOn: [],
                     },
@@ -25,9 +24,15 @@ describe('generateSchedule', () => {
         ];
 
         const config: KitchenConfig = {
-            burners: 4,
+            stoves: 4,
             ovens: 1,
             microwaves: 1,
+            airfryers: 0,
+            pressurecookers: 0,
+            ricecookers: 0,
+            bbqs: 0,
+            other: 0,
+            cooks: 2
         };
 
         const targetTime = new Date('2023-11-23T18:00:00');

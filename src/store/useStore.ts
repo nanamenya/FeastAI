@@ -13,6 +13,7 @@ interface AppState {
     deleteRecipe: (id: string) => void;
     updateKitchenConfig: (config: KitchenConfig) => void;
     setSchedule: (schedule: Schedule | null) => void;
+    setRecipes: (recipes: Recipe[]) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -52,6 +53,9 @@ export const useStore = create<AppState>()(
 
             setSchedule: (schedule) =>
                 set(() => ({ currentSchedule: schedule })),
+
+            setRecipes: (recipes: Recipe[]) =>
+                set(() => ({ recipes })),
         }),
         {
             name: 'feast-ai-storage',

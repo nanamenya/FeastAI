@@ -11,7 +11,7 @@ interface SavedFeast {
 }
 
 export const FeastManager: React.FC = () => {
-    const { recipes, kitchenConfig, addRecipe, updateKitchenConfig, setSchedule } = useStore();
+    const { recipes, kitchenConfig, setRecipes, updateKitchenConfig } = useStore();
     const [savedFeasts, setSavedFeasts] = useState<SavedFeast[]>([]);
     const [showLoadMenu, setShowLoadMenu] = useState(false);
     const [showSaveMenu, setShowSaveMenu] = useState(false);
@@ -104,7 +104,7 @@ export const FeastManager: React.FC = () => {
         // We will just add them. If duplicates exist, it might be messy.
         // Let's rely on the fact that this is a "Test Feast" and usually done on empty.
 
-        testRecipes.forEach(r => addRecipe(r));
+        setRecipes(testRecipes);
 
         updateKitchenConfig({
             stoves: 4,
@@ -138,7 +138,7 @@ export const FeastManager: React.FC = () => {
             // Again, clearing would be better.
             // For now, update config and add recipes.
             updateKitchenConfig(feast.kitchenConfig);
-            feast.recipes.forEach(r => addRecipe(r));
+            setRecipes(feast.recipes);
             setShowLoadMenu(false);
         }
     };
