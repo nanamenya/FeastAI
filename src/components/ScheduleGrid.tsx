@@ -230,16 +230,22 @@ export const ScheduleGrid: React.FC = () => {
                                                                 <div
                                                                     key={task.stepId}
                                                                     className={twMerge(
-                                                                        "absolute rounded border text-xs px-2 py-1 shadow-sm transition-all hover:shadow-md hover:z-10 cursor-pointer leading-tight",
+                                                                        "absolute rounded border text-xs px-2 py-1 shadow-sm transition-all hover:shadow-md hover:z-10 cursor-pointer font-medium overflow-hidden",
                                                                         color
                                                                     )}
-                                                                    style={{ left: `${left}px`, width: `${width}px`, top: `${top}px`, minHeight: '24px', display: 'flex', alignItems: 'center' }}
+                                                                    style={{
+                                                                        left: `${left}px`,
+                                                                        width: `${width}px`,
+                                                                        top: `${top}px`,
+                                                                        minHeight: '24px',
+                                                                        lineHeight: '1.2',
+                                                                        wordBreak: 'break-word',
+                                                                        whiteSpace: 'normal'
+                                                                    }}
                                                                     title={`${task.recipeName}: ${task.stepName} (${task.duration} min)`}
                                                                     data-task-id={task.stepId}
                                                                 >
-                                                                    <div className="break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                                                                        <span className="font-semibold">{task.recipeName}:</span> {task.stepName}
-                                                                    </div>
+                                                                    {task.recipeName}: {task.stepName}
                                                                 </div>
                                                             );
                                                         })}

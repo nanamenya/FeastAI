@@ -25,8 +25,16 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="max-w-7xl mx-auto">
+    <div
+      className="min-h-screen pb-20 relative"
+      style={{
+        backgroundImage: 'url(/feast-ai-wallpaper.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+      }}
+    >
+      <div className="max-w-7xl mx-auto relative z-10">
         {/* Mobile-friendly header */}
         <header className="bg-gradient-to-r from-red-900 to-red-800 text-white p-4 md:p-6 sticky top-0 z-30 shadow-md">
           <div className="max-w-7xl mx-auto">
