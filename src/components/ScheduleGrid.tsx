@@ -32,8 +32,30 @@ export const ScheduleGrid: React.FC = () => {
     });
 
     startTime = new Date(startTime.getTime() - 5 * 60000); // -5 mins
+    endTime = new Date(endTime.getTime() + 5 * 60000); // +5 mins for padding
 
     const pxPerMinute = 4;
+
+    // Generate unique color mapping for each recipe
+    const recipeColors = new Map<string, string>();
+    const availableColors = [
+        'bg-rose-300 border-rose-400 text-rose-900',
+        'bg-sky-300 border-sky-400 text-sky-900',
+        'bg-emerald-300 border-emerald-400 text-emerald-900',
+        'bg-amber-300 border-amber-400 text-amber-900',
+        'bg-violet-300 border-violet-400 text-violet-900',
+        'bg-fuchsia-300 border-fuchsia-400 text-fuchsia-900',
+        'bg-teal-300 border-teal-400 text-teal-900',
+        'bg-orange-300 border-orange-400 text-orange-900',
+        'bg-indigo-300 border-indigo-400 text-indigo-900',
+        'bg-lime-300 border-lime-400 text-lime-900',
+        'bg-cyan-300 border-cyan-400 text-cyan-900',
+        'bg-pink-300 border-pink-400 text-pink-900',
+    ];
+
+    currentSchedule.recipes.forEach((recipe, index) => {
+        recipeColors.set(recipe.id, availableColors[index % availableColors.length]);
+    });
 
     // Build resources list from tasks that are actually scheduled
     const resourcesMap = new Map<string, { id: string; label: string; type: string; order: number }>();
@@ -91,27 +113,18 @@ export const ScheduleGrid: React.FC = () => {
                 <div className="flex flex-wrap gap-3 mb-4 p-3 bg-gray-50 rounded-md border border-gray-100">
                     <span className="text-sm font-semibold text-gray-700 mr-2">Legend:</span>
                     {currentSchedule.recipes.map((recipe) => {
-                        const colors = [
-                            'bg-red-200 border-red-300 text-red-800',
-                            'bg-blue-200 border-blue-300 text-blue-800',
-                            'bg-green-200 border-green-300 text-green-800',
-                            'bg-yellow-200 border-yellow-300 text-yellow-800',
-                            'bg-purple-200 border-purple-300 text-purple-800',
-                            'bg-pink-200 border-pink-300 text-pink-800',
-                        ];
-                        const colorIndex = recipe.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
-
+                        const color = recipeColors.get(recipe.id) || availableColors[0];
                         return (
-                            <div key={recipe.id} className="flex items-center gap-1.5">
-                                <div className={`w-3 h-3 rounded-full ${colors[colorIndex].split(' ')[0]} border ${colors[colorIndex].split(' ')[1]}`}></div>
-                                <span className="text-sm text-gray-600">{recipe.name}</span>
+                            <div key={recipe.id} className={twMerge("px-3 py-1 rounded border text-xs font-medium", color)}>
+                                {recipe.name}
                             </div>
                         );
                     })}
                 </div>
 
-                <div className="relative overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-                    <div className="min-w-[600px] md:min-w-[800px]">
+                {/* Grid Container */}
+                <div className="relative overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0" data-schedule-grid>
+                    <div className="min-w-[1000px] md:min-w-[1200px]">
                         {/* Time Header */}
                         <div className="flex border-b h-8 relative mb-2">
                             <div className="w-32 flex-shrink-0"></div> {/* Spacer for labels */}
@@ -211,28 +224,22 @@ export const ScheduleGrid: React.FC = () => {
                                                             const laneIndex = layout.taskLanes.get(task.stepId) || 0;
                                                             const top = 4 + laneIndex * 30;
 
-                                                            const colors = [
-                                                                'bg-red-200 border-red-300 text-red-800',
-                                                                'bg-blue-200 border-blue-300 text-blue-800',
-                                                                'bg-green-200 border-green-300 text-green-800',
-                                                                'bg-yellow-200 border-yellow-300 text-yellow-800',
-                                                                'bg-purple-200 border-purple-300 text-purple-800',
-                                                                'bg-pink-200 border-pink-300 text-pink-800',
-                                                            ];
-                                                            const colorIndex = task.recipeId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+                                                            const color = recipeColors.get(task.recipeId) || availableColors[0];
 
                                                             return (
                                                                 <div
                                                                     key={task.stepId}
                                                                     className={twMerge(
-                                                                        "absolute rounded border text-xs flex items-center px-2 overflow-hidden whitespace-nowrap shadow-sm transition-all hover:shadow-md hover:z-10 cursor-pointer h-6",
-                                                                        colors[colorIndex]
+                                                                        "absolute rounded border text-xs px-2 py-1 shadow-sm transition-all hover:shadow-md hover:z-10 cursor-pointer leading-tight",
+                                                                        color
                                                                     )}
-                                                                    style={{ left: `${left}px`, width: `${width}px`, top: `${top}px` }}
+                                                                    style={{ left: `${left}px`, width: `${width}px`, top: `${top}px`, minHeight: '24px', display: 'flex', alignItems: 'center' }}
                                                                     title={`${task.recipeName}: ${task.stepName} (${task.duration} min)`}
                                                                     data-task-id={task.stepId}
                                                                 >
-                                                                    <span className="font-semibold mr-1">{task.recipeName}:</span> {task.stepName}
+                                                                    <div className="break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                                                                        <span className="font-semibold">{task.recipeName}:</span> {task.stepName}
+                                                                    </div>
                                                                 </div>
                                                             );
                                                         })}
@@ -244,6 +251,11 @@ export const ScheduleGrid: React.FC = () => {
 
                                     {/* Dependency Arrows */}
                                     <svg className="absolute top-0 left-32 right-0 bottom-0 pointer-events-none" style={{ zIndex: 15, height: `${currentTop}px` }}>
+                                        <defs>
+                                            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                                <polygon points="0 0, 10 3, 0 6" fill="black" opacity="0.4" />
+                                            </marker>
+                                        </defs>
                                         {tasks.map(task => {
                                             return (task.dependencies || []).map((depId, idx) => {
                                                 const depTask = tasks.find(t => t.stepId === depId);
@@ -294,22 +306,29 @@ export const ScheduleGrid: React.FC = () => {
                                                 );
                                             });
                                         })}
-                                        <defs>
-                                            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                                                <polygon points="0 0, 10 3, 0 6" fill="black" opacity="0.4" />
-                                            </marker>
-                                        </defs>
                                     </svg>
                                 </div>
                             );
                         })()}
 
-                        {/* Target Time Line */}
+                        {/* Target Time Line - Checkered Finish Line */}
                         <div
-                            className="absolute top-8 bottom-0 border-r-2 border-red-500 z-20 pointer-events-none"
-                            style={{ left: `${(differenceInMinutes(targetTime, startTime) * pxPerMinute) + 128}px` }} // +128 for label width
+                            className="absolute top-8 bottom-0 z-20 pointer-events-none"
+                            style={{
+                                left: `${(differenceInMinutes(targetTime, startTime) * pxPerMinute) + 128}px`,
+                                width: '24px',
+                            }}
                         >
-                            <div className="absolute -top-6 -right-3 bg-red-500 text-white text-xs px-1 rounded">Target</div>
+                            {/* Create 4 columns of checkerboard pattern */}
+                            <div className="absolute inset-0 flex">
+                                {[0, 1, 2, 3].map(col => (
+                                    <div key={col} className="flex-1" style={{
+                                        background: `repeating-linear-gradient(0deg, ${col % 2 === 0 ? '#000' : '#fff'} 0px, ${col % 2 === 0 ? '#000' : '#fff'} 12px, ${col % 2 === 0 ? '#fff' : '#000'} 12px, ${col % 2 === 0 ? '#fff' : '#000'} 24px)`,
+                                        border: '0.5px solid #666'
+                                    }} />
+                                ))}
+                            </div>
+                            <div className="absolute -top-6 -right-2 bg-black text-white text-xs px-2 py-1 rounded font-bold whitespace-nowrap">🏁 Target</div>
                         </div>
                     </div>
                 </div>

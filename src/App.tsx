@@ -6,6 +6,7 @@ import { RecipeForm } from './components/RecipeForm';
 import { MealSetup } from './components/MealSetup';
 import { ScheduleGrid } from './components/ScheduleGrid';
 import { FeastManager } from './components/FeastManager';
+import { CookSetup } from './components/CookSetup';
 import { Plus } from 'lucide-react';
 import type { Recipe } from './types/types';
 
@@ -27,10 +28,10 @@ function App() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <div className="max-w-7xl mx-auto">
         {/* Mobile-friendly header */}
-        <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 md:p-6 sticky top-0 z-30 shadow-md">
+        <header className="bg-gradient-to-r from-red-900 to-red-800 text-white p-4 md:p-6 sticky top-0 z-30 shadow-md">
           <div className="max-w-7xl mx-auto">
-            <h1 className="text-2xl md:text-3xl font-bold">FeastAI</h1>
-            <p className="text-sm md:text-base text-blue-100 mt-1">Meal coordination made easy</p>
+            <h1 className="text-2xl md:text-3xl font-bold">Feast.ai</h1>
+            <p className="text-sm md:text-base text-red-100 mt-1">Meal coordination made easy</p>
           </div>
         </header>
 
@@ -38,7 +39,10 @@ function App() {
           {/* 0. Feast Manager */}
           <FeastManager />
 
-          {/* 1. Kitchen Setup */}
+          {/* 1. Cook Setup */}
+          <CookSetup />
+
+          {/* 2. Kitchen Setup */}
           <section className="bg-white rounded-lg shadow-md p-4 md:p-6">
             <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">Kitchen Setup</h2>
             <KitchenConfig />

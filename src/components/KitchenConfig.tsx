@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from '../store/useStore';
-import { Flame, Microwave, Disc, Wind, Droplet, Zap, Beef, CircleDot, User } from 'lucide-react';
+import { Flame, Microwave, Disc, Wind, Droplet, Zap, Beef, CircleDot } from 'lucide-react';
 
 export const KitchenConfig: React.FC = () => {
     const { kitchenConfig, updateKitchenConfig } = useStore();
@@ -122,20 +122,6 @@ export const KitchenConfig: React.FC = () => {
                     min="0"
                     value={kitchenConfig.other}
                     onChange={(e) => handleChange('other', parseInt(e.target.value) || 0)}
-                    className="w-full p-2 md:p-3 border rounded-md text-center text-base"
-                />
-            </div>
-
-            <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-gray-700 text-sm md:text-base">
-                    <User className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
-                    <span>Cooks</span>
-                </div>
-                <input
-                    type="number"
-                    min="1"
-                    value={kitchenConfig.cooks}
-                    onChange={(e) => handleChange('cooks', Math.max(1, parseInt(e.target.value) || 1))}
                     className="w-full p-2 md:p-3 border rounded-md text-center text-base"
                 />
             </div>
