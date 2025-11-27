@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+/* Mobile-first optimizations */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    font-size: 16px;
+}
+
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure minimum touch target sizes */
+button,
+a,
+input,
+select {
+    min-height: 44px;
+}
+
+/* Better mobile scrolling */
+.overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Print styles */
+@media print {
+    @page {
+        margin: 0.5in;
+    }
+
+    header,
+    button,
+    .no-print {
+        display: none !important;
+    }
+}

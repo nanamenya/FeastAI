@@ -1,0 +1,529 @@
+FeastAI - Product Requirements Document
+1. Overview
+1.1 Product Vision
+FeastAI is a Progressive Web App (PWA) that helps users coordinate multi-dish meal preparation by generating optimized cooking schedules. The app ensures all dishes are ready at the target serving time while minimizing total preparation time and managing limited cooking appliances.
+1.2 Target Users
+	•	Home cooks preparing dinner parties or holiday meals with multiple dishes
+	•	Anyone coordinating complex meals with limited kitchen resources
+	•	Users comfortable with basic technology and recipe websites
+1.3 Core Value Proposition
+Eliminates the stress of timing multiple dishes by providing a clear, visual schedule that accounts for appliance constraints and ensures hot dishes arrive hot at serving time.
+
+2. Product Phases
+Phase 1 (MVP)
+Manual recipe entry, basic scheduling algorithm, read-only schedule visualization.
+Phase 2
+LLM-powered recipe extraction (user-provided Gemini API key), editable schedule grid with drag-and-drop.
+Phase 3
+Advanced features: recipe library, schedule sharing, mobile optimizations.
+
+3. Functional Requirements
+3.1 Recipe Management
+3.1.1 Recipe Entry (Phase 1 - Manual)
+	•	Input Fields:
+	•	Dish name (text, required)
+	•	Recipe URL (text, optional - for reference only)
+	•	Serving requirement: Hot/Cold (radio button, required)
+	•	Priority for hot dishes: High/Medium/Low (dropdown, required if Hot)
+	•	Cooking Steps: Users can add multiple cooking steps per recipe
+	•	Step name (text, required)
+	•	Appliance required (dropdown: Stovetop Burner, Oven, Microwave, Prep, required)
+	•	Cooking time in minutes (number, required)
+	•	Temperature (number with unit selector °F/°C, optional)
+	•	Dependencies: "Must complete after" another step (dropdown of previous steps, optional)
+	•	Aggregated Prep Block:
+	•	Each recipe automatically gets one "Prep" block
+	•	Default: 15 minutes if not specified
+	•	User can edit prep time
+	•	Prep block represents ALL prep activities (chopping, measuring, mixing, etc.) aggregated into one task
+	•	Prep block does not require an appliance
+3.1.2 Recipe Entry (Phase 2 - LLM-Assisted)
+	•	User pastes recipe URL
+	•	System uses Gemini API to extract: 
+	•	Dish name
+	•	All cooking steps with appliance, time, temperature
+	•	Sequential dependencies between steps
+	•	Aggregated prep time (if not specified in recipe, default to 15 minutes)
+	•	Hot/Cold serving requirement (inferred from dish type)
+	•	User reviews and confirms/edits extracted data before saving
+	•	If LLM extraction fails, fall back to manual entry
+3.1.3 Recipe Storage
+	•	Recipes stored in browser LocalStorage
+	•	Users can save, edit, and delete recipes
+	•	Recipe list view showing all saved recipes
+3.2 Kitchen Configuration
+3.2.1 Appliance Setup
+	•	Users define their kitchen setup: 
+	•	Number of stovetop burners (default: 4)
+	•	Number of ovens (default: 1)
+	•	Number of microwaves (default: 1)
+	•	Configuration saved to LocalStorage
+	•	Can be edited at any time
+	•	Each burner/oven/microwave treated as a separate resource
+3.3 Meal Planning
+3.3.1 Meal Setup
+	•	User selects multiple recipes from saved library
+	•	User specifies target serving time (time picker)
+	•	System validates that scheduling is feasible given appliance constraints
+3.3.2 Schedule Generation
+	•	Optimization Goal: Minimize total elapsed time (start cooking as late as possible while meeting target serving time)
+	•	Scheduling Algorithm:
+	•	Parse all cooking steps and dependencies across all dishes
+	•	Identify critical path (longest sequence of dependent steps)
+	•	Work backwards from target serving time
+	•	Schedule steps respecting: 
+	•	Appliance constraints (one task per appliance at a time)
+	•	Step dependencies (sequential steps within recipes)
+	•	Prep blocks (must complete before cooking steps for that recipe)
+	•	Hot dish priority (highest priority hot dish finishes exactly at target time)
+	•	Cold dishes (can finish earlier than target time)
+	•	Assign specific appliances to each step
+	•	Generate start times for each step
+	•	Constraint Handling:
+	•	If no feasible schedule exists, inform user with reason: 
+	•	"Too many dishes require the same appliance simultaneously"
+	•	"Not enough time to complete all dishes before target serving time"
+	•	"Step dependencies create impossible timing requirements"
+3.4 Schedule Visualization
+3.4.1 Grid Display (Phase 1 - Read-Only)
+	•	Horizontal axis: Time in 5-minute blocks
+	•	Start time determined by algorithm
+	•	End time = target serving time
+	•	Current time marker if viewing during cooking
+	•	Vertical axis: Resources (rows)
+	•	One row labeled "Prep" for all prep activities
+	•	One row per stovetop burner (Burner 1, Burner 2, etc.)
+	•	One row per oven (Oven 1, etc.)
+	•	One row per microwave (Microwave 1, etc.)
+	•	Task Blocks:
+	•	Each task displayed as colored block overlaid on grid
+	•	Block width = task duration (scaled to 5-min blocks)
+	•	Block shows: Dish name, step name, time duration
+	•	Color-coded by dish (each recipe gets unique color)
+	•	Hot dishes marked with 🔥 icon
+	•	High-priority hot dishes have bold border
+	•	Visual Indicators:
+	•	Dependencies shown with arrows between blocks
+	•	Target serving time marked with vertical line
+	•	Gaps/idle time visible as empty grid space
+3.4.2 Editable Grid (Phase 2)
+	•	Drag-and-Drop:
+	•	Users can drag task blocks horizontally (change start time)
+	•	Users can drag task blocks vertically (change appliance, if same type)
+	•	Real-time collision detection
+	•	Validation:
+	•	Invalid states clearly marked in red: 
+	•	Overlapping tasks on same appliance
+	•	Dependencies violated (step starts before prerequisite completes)
+	•	Hot dishes finishing after target time
+	•	Error messages displayed next to invalid blocks
+	•	Schedule cannot be saved/used if invalid
+	•	Manual Adjustments:
+	•	Users can manually edit task start times
+	•	Users can reassign tasks to different appliances (same type)
+	•	Changes trigger re-validation
+3.4.3 Schedule Export
+	•	Print-friendly view
+	•	Export as image (PNG)
+	•	Export as text list with times
+3.5 Cooking Mode
+3.5.1 Active Schedule View
+	•	Current time indicator moves across grid in real-time
+	•	Highlight next task(s) to start
+	•	Mark completed tasks (user can check off)
+	•	Push notifications (if PWA permissions granted): 
+	•	5 minutes before each task starts
+	•	When task should be starting
+
+4. Technical Architecture
+4.1 Technology Stack
+	•	Frontend: React with TypeScript
+	•	State Management: React Context API or Zustand
+	•	Styling: Tailwind CSS for responsive design
+	•	Grid Visualization: Custom HTML5 Canvas or SVG, or react-grid-layout library
+	•	LLM Integration (Phase 2): Google Gemini API
+	•	Storage: Browser LocalStorage
+	•	PWA: Workbox for service worker, Web App Manifest
+4.2 Data Models
+Recipe
+interface Recipe {
+  id: string;
+  name: string;
+  url?: string;
+  servingRequirement: 'hot' | 'cold';
+  hotPriority?: 'high' | 'medium' | 'low'; // required if hot
+  prepTime: number; // minutes, default 15
+  steps: CookingStep[];
+}
+CookingStep
+interface CookingStep {
+  id: string;
+  recipeId: string;
+  name: string;
+  appliance: 'prep' | 'burner' | 'oven' | 'microwave';
+  duration: number; // minutes
+  temperature?: number;
+  temperatureUnit?: 'F' | 'C';
+  dependsOn?: string[]; // array of step IDs that must complete first
+}
+KitchenConfig
+interface KitchenConfig {
+  burners: number;
+  ovens: number;
+  microwaves: number;
+}
+ScheduledTask
+interface ScheduledTask {
+  stepId: string;
+  recipeId: string;
+  recipeName: string;
+  stepName: string;
+  appliance: string;
+  applianceInstance: number; // which specific burner/oven
+  startTime: Date;
+  endTime: Date;
+  duration: number;
+  isHot: boolean;
+  priority?: string;
+  dependencies: string[];
+}
+Schedule
+interface Schedule {
+  id: string;
+  targetTime: Date;
+  recipes: Recipe[];
+  tasks: ScheduledTask[];
+  totalElapsedTime: number; // minutes
+  isValid: boolean;
+  validationErrors?: string[];
+}
+4.3 Scheduling Algorithm Pseudocode
+function generateSchedule(recipes, kitchenConfig, targetTime):
+  // 1. Collect all steps and prep blocks
+  allSteps = []
+  for each recipe:
+    add prepBlock(recipe, duration=recipe.prepTime, appliance='prep')
+    for each step in recipe.steps:
+      allSteps.add(step)
+  
+  // 2. Build dependency graph
+  dependencyGraph = buildGraph(allSteps)
+  
+  // 3. Topological sort to get valid ordering
+  orderedSteps = topologicalSort(dependencyGraph)
+  
+  // 4. Calculate earliest start times (forward pass)
+  for each step in orderedSteps:
+    if step has no dependencies:
+      step.earliestStart = 0
+    else:
+      step.earliestStart = max(dependency.earliestFinish for all dependencies)
+    step.earliestFinish = step.earliestStart + step.duration
+  
+  // 5. Calculate latest start times (backward pass from target)
+  criticalPath = findLongestPath(dependencyGraph)
+  totalMinTime = criticalPath.duration
+  
+  // Identify highest priority hot dish
+  primaryHotDish = findHighestPriorityHotDish(recipes)
+  
+  for each step in reverse(orderedSteps):
+    if step is final step of primaryHotDish:
+      step.latestFinish = targetTime
+    else if step is final step of hot dish:
+      step.latestFinish = targetTime
+    else if step is final step of cold dish:
+      step.latestFinish = targetTime // can finish earlier during scheduling
+    else:
+      step.latestFinish = min(successor.latestStart for all successors)
+    
+    step.latestStart = step.latestFinish - step.duration
+  
+  // 6. Schedule tasks using list scheduling heuristic
+  schedule = []
+  resources = initializeResources(kitchenConfig)
+  timeSlots = createTimeSlots(targetTime - totalMinTime, targetTime, interval=5min)
+  
+  for each timeSlot:
+    // Find tasks ready to execute (dependencies met, not yet scheduled)
+    readyTasks = findReadyTasks(orderedSteps, schedule, timeSlot)
+    
+    // Sort by priority: hot > cold, high priority > low, earliest latestStart first
+    sortByPriority(readyTasks)
+    
+    for each task in readyTasks:
+      resource = findAvailableResource(resources, task.appliance, timeSlot)
+      if resource:
+        assignTask(schedule, task, resource, timeSlot)
+  
+  // 7. Validate schedule
+  errors = validateSchedule(schedule, recipes, targetTime)
+  
+  return {schedule, errors}
+
+function validateSchedule(schedule, recipes, targetTime):
+  errors = []
+  
+  // Check for appliance conflicts
+  for each timeSlot:
+    for each appliance:
+      if countTasksOnAppliance(schedule, appliance, timeSlot) > 1:
+        errors.add("Appliance conflict at " + timeSlot)
+  
+  // Check dependencies satisfied
+  for each task in schedule:
+    for each dependency:
+      if dependency.endTime > task.startTime:
+        errors.add("Dependency violation for " + task.name)
+  
+  // Check hot dishes finish on time
+  for each recipe where servingRequirement == 'hot':
+    finalTask = findFinalTask(schedule, recipe)
+    if finalTask.endTime > targetTime:
+      errors.add(recipe.name + " finishes after target time")
+  
+  return errors
+4.4 LLM Integration (Phase 2)
+Recipe Extraction Prompt Template
+You are a cooking assistant. Extract structured information from this recipe.
+
+Recipe URL: {url}
+Recipe Text: {text}
+
+Extract the following in JSON format:
+{
+  "dishName": "string",
+  "servingRequirement": "hot" or "cold",
+  "prepTime": number (minutes, default 15 if not specified),
+  "steps": [
+    {
+      "name": "string (brief description)",
+      "appliance": "burner" | "oven" | "microwave",
+      "duration": number (minutes),
+      "temperature": number (optional),
+      "temperatureUnit": "F" | "C" (optional),
+      "dependsOn": [array of previous step names that must complete first]
+    }
+  ]
+}
+
+Guidelines:
+- Aggregate all prep activities (chopping, mixing, measuring) into the single prepTime value
+- Only include cooking steps that require appliances (burner/oven/microwave)
+- Identify sequential dependencies (e.g., "make sauce" must complete before "add sauce to pasta")
+- If a recipe has multiple cooking stages with the same appliance, create separate steps
+- Infer appliance from cooking method (sauté→burner, bake→oven, reheat→microwave)
+API Implementation
+async function extractRecipe(url: string, apiKey: string): Promise<Recipe> {
+  // 1. Fetch recipe content (may need web scraping)
+  const recipeText = await fetchRecipeContent(url);
+  
+  // 2. Call Gemini API
+  const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': apiKey
+    },
+    body: JSON.stringify({
+      contents: [{
+        parts: [{
+          text: EXTRACTION_PROMPT_TEMPLATE
+            .replace('{url}', url)
+            .replace('{text}', recipeText)
+        }]
+      }]
+    })
+  });
+  
+  // 3. Parse JSON response
+  const data = await response.json();
+  const extracted = JSON.parse(data.candidates[0].content.parts[0].text);
+  
+  // 4. Convert to Recipe object
+  return {
+    id: generateId(),
+    name: extracted.dishName,
+    url: url,
+    servingRequirement: extracted.servingRequirement,
+    hotPriority: extracted.servingRequirement === 'hot' ? 'medium' : undefined,
+    prepTime: extracted.prepTime || 15,
+    steps: extracted.steps.map(step => ({
+      id: generateId(),
+      recipeId: '', // assigned after recipe created
+      name: step.name,
+      appliance: step.appliance,
+      duration: step.duration,
+      temperature: step.temperature,
+      temperatureUnit: step.temperatureUnit,
+      dependsOn: [] // resolved after all steps created
+    }))
+  };
+}
+
+5. User Interface Design
+5.1 Screen Flow
+	•	Home Screen: New meal, Saved recipes, Kitchen config
+	•	Recipe Entry: Manual form or URL input (Phase 2)
+	•	Meal Setup: Select recipes, set target time
+	•	Schedule View: Grid visualization
+	•	Cooking Mode: Live schedule with current time
+5.2 Key UI Components
+Recipe Form
+	•	Clean, step-by-step form
+	•	"Add Step" button to add multiple cooking steps
+	•	Dependency selector shows only previous steps
+	•	Visual preview of recipe structure
+Kitchen Config Screen
+	•	Simple number inputs for appliance counts
+	•	Visual icons for each appliance type
+	•	Save/Cancel buttons
+Schedule Grid
+	•	Responsive design (horizontal scroll on mobile)
+	•	Zoom controls (+/- buttons)
+	•	Legend showing dish colors and icons
+	•	Time axis with clear labels every 15-30 minutes
+	•	Resource labels on left side
+	•	Grid lines every 5 minutes (light) and 15 minutes (bold)
+Cooking Mode
+	•	Large, clear "Next Up" section
+	•	Checklist of tasks
+	•	Timer integration
+	•	Pause/Resume capability
+5.3 Responsive Design
+	•	Desktop: Full grid view, side-by-side recipe list and schedule
+	•	Tablet: Collapsible recipe list, full-width grid
+	•	Mobile: 
+	•	Vertical scrolling priority
+	•	Condensed grid (smaller blocks)
+	•	Swipe gestures for navigation
+	•	Bottom sheet for task details
+
+6. Non-Functional Requirements
+6.1 Performance
+	•	Schedule generation: < 3 seconds for up to 10 recipes
+	•	Grid rendering: < 1 second for schedules up to 3 hours
+	•	PWA loads offline after first visit
+6.2 Usability
+	•	Intuitive for users with basic cooking and tech literacy
+	•	No more than 3 clicks to generate a schedule
+	•	Clear error messages with actionable guidance
+	•	Works without internet (except LLM features)
+6.3 Browser Support
+	•	Chrome/Edge: Last 2 versions
+	•	Safari: Last 2 versions
+	•	Firefox: Last 2 versions
+	•	Mobile browsers: iOS Safari 14+, Chrome Android
+6.4 Data Privacy
+	•	All data stored locally (no server)
+	•	User-provided API keys stored securely in LocalStorage
+	•	No analytics or tracking (optional: privacy-preserving analytics)
+6.5 Accessibility
+	•	WCAG 2.1 AA compliance
+	•	Keyboard navigation support
+	•	Screen reader compatibility
+	•	Color-blind friendly color scheme
+	•	High contrast mode option
+
+7. Future Enhancements (Phase 3+)
+7.1 Advanced Features
+	•	Recipe scaling: Adjust serving sizes, recalculate times
+	•	Recipe sharing: Export/import recipes as JSON
+	•	Meal templates: Save common meal combinations
+	•	Multi-oven support: Handle different oven temperatures simultaneously
+	•	Keep-warm capabilities: Schedule dishes to finish early and keep warm
+	•	Shopping list generator: Extract ingredients from all recipes
+7.2 Social Features
+	•	Schedule sharing: Share schedules via link
+	•	Recipe database: Community-contributed recipes
+	•	Comments and ratings: User feedback on recipes
+7.3 Intelligence Improvements
+	•	Learning: Adjust default times based on user's historical edits
+	•	Smart suggestions: Recommend dishes that pair well timing-wise
+	•	Conflict resolution: AI-powered suggestions to resolve scheduling conflicts
+7.4 Integrations
+	•	Recipe websites: Direct integration with popular recipe sites
+	•	Smart appliances: Send schedules to smart ovens/ranges
+	•	Calendar: Add meal prep blocks to Google/Apple Calendar
+	•	Voice assistants: "Alexa, what's next on my FeastAI schedule?"
+
+8. Success Metrics
+8.1 MVP Success Criteria
+	•	Users can create and save recipes manually
+	•	Users can generate valid schedules for 3-5 dish meals
+	•	Schedule visualization is clear and readable
+	•	90% of schedules generate in < 3 seconds
+8.2 Phase 2 Success Criteria
+	•	80% of recipe extractions require no manual editing
+	•	Users successfully edit and save modified schedules
+	•	< 5% of dragged tasks result in invalid states
+8.3 Long-term Metrics
+	•	Monthly active users
+	•	Average recipes per user
+	•	Average meal complexity (number of dishes)
+	•	User retention (return within 30 days)
+	•	Feature adoption rates
+
+9. Development Phases
+Phase 1: MVP (4-6 weeks)
+Week 1-2: Core data models, recipe management, kitchen config Week 3-4: Scheduling algorithm implementation and testing Week 5: Grid visualization (read-only) Week 6: PWA setup, testing, bug fixes
+Phase 2: LLM & Editing (3-4 weeks)
+Week 1: Gemini API integration, recipe extraction Week 2-3: Editable grid with drag-and-drop Week 4: Validation, testing, refinement
+Phase 3: Polish & Advanced Features (Ongoing)
+	•	Cooking mode with timers
+	•	Export/sharing capabilities
+	•	Mobile optimizations
+	•	Advanced scheduling features
+
+10. Open Questions & Risks
+10.1 Open Questions
+	•	Should prep blocks be per-recipe or aggregate all prep? 
+	•	Decision: Per-recipe, shown on "Prep" row
+	•	How to handle recipes with unclear appliance requirements? 
+	•	Decision: Force user to specify during manual review
+	•	Should temperature conflicts in ovens be flagged? 
+	•	Decision: Phase 1 assumes one dish per oven; Phase 3 can add multi-temp support
+10.2 Technical Risks
+	•	Scheduling complexity: For complex meals (10+ dishes), algorithm may not find optimal solutions 
+	•	Mitigation: Implement heuristics, set maximum meal complexity for MVP
+	•	LLM accuracy: Recipe extraction may fail or be inaccurate 
+	•	Mitigation: Always allow manual review and editing
+	•	Browser compatibility: LocalStorage limits, PWA support varies 
+	•	Mitigation: Implement storage quotas, graceful degradation
+10.3 User Experience Risks
+	•	Learning curve: Grid visualization may be confusing initially 
+	•	Mitigation: Add onboarding tutorial, tooltips
+	•	Mobile usability: Complex grid may not work well on small screens 
+	•	Mitigation: Design mobile-first alternative view (list-based)
+
+11. Appendix
+11.1 Glossary
+	•	Appliance: Physical cooking device (burner, oven, microwave)
+	•	Step: Single cooking action within a recipe
+	•	Prep block: Aggregated preparation time for a recipe (non-appliance work)
+	•	Dependency: Requirement that one step must complete before another starts
+	•	Target time: Desired serving time for the meal
+	•	Critical path: Longest sequence of dependent steps determining minimum total time
+11.2 References
+	•	Job Shop Scheduling Problem: https://en.wikipedia.org/wiki/Job-shop_scheduling
+	•	PWA Best Practices: https://web.dev/progressive-web-apps/
+	•	Gemini API Documentation: https://ai.google.dev/docs
+11.3 Example Use Case
+Scenario: Thanksgiving dinner with 4 dishes
+	•	Turkey (hot, high priority): 3 hours in oven
+	•	Mashed potatoes (hot, medium): 15 min prep, 30 min boil on burner
+	•	Green beans (hot, low): 10 min prep, 15 min sauté on burner
+	•	Cranberry sauce (cold): 10 min prep, 20 min simmer on burner
+Kitchen: 4 burners, 1 oven Target time: 6:00 PM
+Generated Schedule:
+	•	2:45 PM: Start turkey in oven
+	•	5:00 PM: Prep cranberry sauce (15 min)
+	•	5:15 PM: Cook cranberry sauce on Burner 1 (20 min, finishes 5:35 PM)
+	•	5:20 PM: Prep green beans (10 min)
+	•	5:30 PM: Prep mashed potatoes (15 min)
+	•	5:45 PM: Turkey done, remove from oven
+	•	5:45 PM: Boil potatoes on Burner 2 (30 min)
+	•	5:45 PM: Sauté green beans on Burner 3 (15 min)
+	•	6:00 PM: All hot dishes ready, serve!
+Total elapsed time: 3 hours 15 minutes (2:45 PM - 6:00 PM) Appliance utilization: Oven: 3 hrs, Burners: minimal overlap, efficient use
+
